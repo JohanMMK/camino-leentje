@@ -1243,6 +1243,7 @@ findBtn.addEventListener('click', () => {
 function showCaminoLocation(lat, lng, acc) {
   const nearest = findNearestCamino(lat, lng);
   const day = itinerary.find(d => d.day === nearest.day);
+  const selDay = itinerary.find(d => d.day === currentDay);
   const bear = calcBearing(lat, lng, nearest.lat, nearest.lng);
   const dir = compass(bear);
   const distStr = nearest.dist < 1
@@ -1260,9 +1261,9 @@ function showCaminoLocation(lat, lng, acc) {
       <div class="cm-compass"><span class="arrow">${dir.arrow}</span>${dir.short} — ${timeStr} stappen</div>
     </div>
     <a class="cm-route-btn" href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${nearest.lat},${nearest.lng}&travelmode=walking" target="_blank" rel="noopener">🚶 Snelste route terug naar Camino</a>
-    <a class="cm-route-btn cm-day-btn" href="${buildDayRouteUrl(nearest.day, lat, lng)}" target="_blank" rel="noopener">🗺️ Hele etappe vandaag in Google Maps</a>
-    <div class="cm-stat">Dichtste Camino-punt: <strong>${nearest.fromPoint} → ${nearest.toPoint}</strong></div>
-    <div class="cm-stat">Op de route van <strong>Dag ${day.day} — ${day.title}</strong> (${day.date})</div>
+    <a class="cm-route-btn cm-day-btn" href="${buildDayRouteUrl(currentDay, lat, lng)}" target="_blank" rel="noopener">🗺️ Hele etappe van dag ${currentDay} in Google Maps</a>
+    <div class="cm-stat">Dichtste Camino-punt: <strong>${nearest.fromPoint} → ${nearest.toPoint}</strong> (dag ${nearest.day})</div>
+    <div class="cm-stat">Geselecteerd: <strong>Dag ${selDay.day} — ${selDay.title}</strong> (${selDay.date})</div>${nearest.day !== currentDay ? `<div class="cm-warning" style="margin-top:8px;">⚠️ Je bent geografisch dichter bij <strong>dag ${nearest.day}</strong> dan bij de geselecteerde dag ${currentDay}. Wissel eventueel van dag in het menu bovenaan.</div>` : ''}
   `;
 
   cmInfo.innerHTML = `

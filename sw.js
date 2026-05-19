@@ -1,7 +1,7 @@
 // Service Worker voor offline gebruik tijdens de Camino
 // v2: voegt route-waypoints, find-feature, en Leaflet toe
 
-const CACHE_NAME = 'camino-leentje-v3';
+const CACHE_NAME = 'camino-leentje-v4';
 const URLS_TO_CACHE = [
   './',
   './index.html'
