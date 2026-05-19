@@ -987,6 +987,8 @@ render();
     font-size: 14px;
   }
   .cm-route-btn:active { background: #1e8b4d; }
+  .cm-route-btn.cm-day-btn { background: #1F4E79; }
+  .cm-route-btn.cm-day-btn:active { background: #163a5c; }
   .cm-warning {
     background: #fff8e7;
     border-left: 3px solid #d4a017;
@@ -1160,6 +1162,49 @@ function findNearestCamino(userLat, userLng) {
   return best;
 }
 
+// Bouw URL voor de hele dagroute via meerdere waypoints.
+// Optioneel start vanaf gebruiker (als userLat/Lng gegeven), anders vanaf eerste waypoint.
+// Google Maps ondersteunt ~9 waypoints max -> subsample indien nodig.
+function buildDayRouteUrl(dayNum, userLat, userLng) {
+  const wpts = routeWaypoints[dayNum];
+  if (!wpts || wpts.length === 0) return '#';
+
+  // Origin = gebruiker (als gegeven) of eerste waypoint
+  const hasUser = (userLat != null && userLng != null);
+  const origin = hasUser
+    ? `${userLat},${userLng}`
+    : `${wpts[0].lat},${wpts[0].lng}`;
+  const dest = `${wpts[wpts.length - 1].lat},${wpts[wpts.length - 1].lng}`;
+
+  // Tussenliggende waypoints (zonder eerste/laatste)
+  const middle = hasUser
+    ? wpts.slice(0, -1)         // alles behalve eindpunt (eerste wpt komt na user)
+    : wpts.slice(1, -1);        // alles behalve start en eind
+
+  // Google Maps limiet: 9 waypoints. Subsample evenredig.
+  const MAX_WP = 8;
+  let chosen = middle;
+  if (middle.length > MAX_WP) {
+    chosen = [];
+    const step = (middle.length - 1) / (MAX_WP - 1);
+    for (let i = 0; i < MAX_WP; i++) {
+      chosen.push(middle[Math.round(i * step)]);
+    }
+  }
+
+  const wpStr = chosen.map(p => `${p.lat},${p.lng}`).join('|');
+  const params = new URLSearchParams({
+    api: '1',
+    origin: origin,
+    destination: dest,
+    travelmode: 'walking'
+  });
+  // waypoints encoderen niet via URLSearchParams (zou pipes encoden) - apart toevoegen
+  let url = `https://www.google.com/maps/dir/?${params.toString()}`;
+  if (wpStr) url += `&waypoints=${encodeURIComponent(wpStr)}`;
+  return url;
+}
+
 // ============= UI HANDLERS =============
 const findBtn = document.getElementById('findCaminoBtn');
 const modal = document.getElementById('caminoModal');
@@ -1214,7 +1259,8 @@ function showCaminoLocation(lat, lng, acc) {
       <p class="cm-dist">${distStr}</p>
       <div class="cm-compass"><span class="arrow">${dir.arrow}</span>${dir.short} — ${timeStr} stappen</div>
     </div>
-    <a class="cm-route-btn" href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${nearest.lat},${nearest.lng}&travelmode=walking" target="_blank" rel="noopener">🚶 Open route in Google Maps</a>
+    <a class="cm-route-btn" href="https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${nearest.lat},${nearest.lng}&travelmode=walking" target="_blank" rel="noopener">🚶 Snelste route terug naar Camino</a>
+    <a class="cm-route-btn cm-day-btn" href="${buildDayRouteUrl(nearest.day, lat, lng)}" target="_blank" rel="noopener">🗺️ Hele etappe vandaag in Google Maps</a>
     <div class="cm-stat">Dichtste Camino-punt: <strong>${nearest.fromPoint} → ${nearest.toPoint}</strong></div>
     <div class="cm-stat">Op de route van <strong>Dag ${day.day} — ${day.title}</strong> (${day.date})</div>
   `;
